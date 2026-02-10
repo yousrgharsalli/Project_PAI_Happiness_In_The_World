@@ -7,6 +7,7 @@ from data_manager import DataManager
 # Cela permet de découper le code et de garder ce fichier principal propre et court.
 from tab_country import CountryTab
 from tab_comparison import ComparisonTab
+from tab_map_interactive import MapTabInteractive
 
 class MainWindow(QMainWindow):
     """
@@ -44,12 +45,12 @@ class MainWindow(QMainWindow):
         # Ainsi, les onglets n'ont pas besoin de recharger le CSV eux-mêmes (gain de mémoire et de temps).
         self.tab_country = CountryTab(self.data_manager)
         self.tab_comparison = ComparisonTab(self.data_manager)
-
+        self.tab_map = MapTabInteractive(self.data_manager)
         # 4. Ajout visuel des onglets dans la fenêtre
         # Le premier argument est le widget (l'écran), le second est le titre écrit sur l'onglet
         self.tabs.addTab(self.tab_country, "Vue d'ensemble")
         self.tabs.addTab(self.tab_comparison, "Comparaison")
-
+        self.tabs.addTab(self.tab_map, "Carte")
 # --- POINT D'ENTRÉE DU PROGRAMME ---
 # Ce bloc vérifie si ce fichier est le script principal exécuté par l'utilisateur.
 if __name__ == "__main__":

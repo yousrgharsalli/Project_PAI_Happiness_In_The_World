@@ -1,0 +1,34 @@
+name: Happyness Index Analyzer - CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Import sanity check
+      run: |
+        python - <<EOF
+        import data_manager
+        import tab_country
+        import tab_comparison
+        import tab_map_interactive
+        print("All core modules imported successfully")
+        EOF

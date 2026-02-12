@@ -1,28 +1,9 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QLabel, QComboBox, QDoubleSpinBox
 from PyQt6.QtCore import QUrl
 import plotly.express as px
-import pycountry
+from country_iso_map import COUNTRY_TO_ISO3
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-NAME_FIX = {
-    "United States": "United States",
-    "Russia": "Russian Federation",
-    "South Korea": "Korea, Republic of",
-    "North Korea": "Korea, Democratic People's Republic of",
-    "Iran": "Iran, Islamic Republic of",
-    "Vietnam": "Viet Nam",
-}
 
-def to_iso3(country_name: str):
-    name = NAME_FIX.get(country_name, country_name)
-    c = pycountry.countries.get(name=name)
-    if c:
-        return c.alpha_3
-    # tentative fuzzy (plus permissive)
-    try:
-        matches = pycountry.countries.search_fuzzy(name)
-        return matches[0].alpha_3
-    except Exception:
-        return None
 
 class MapTabInteractive(QWidget):
     def __init__(self, data_manager):
@@ -32,7 +13,7 @@ class MapTabInteractive(QWidget):
 
         main = QHBoxLayout(self)
 
-        # --- Filtres (comme ton Option A) ---
+        # --- Filtres ---
         filters_box = QGroupBox("Filtres")
         left = QVBoxLayout(filters_box)
 
@@ -109,18 +90,33 @@ class MapTabInteractive(QWidget):
         ).copy()
 
         # Convertir les pays en ISO3
-        df["iso3"] = df["Country"].apply(to_iso3)
+        df["iso3"] = df["Country"].map(COUNTRY_TO_ISO3)
         df = df.dropna(subset=["iso3"])
 
-        # Choisis ce que tu veux colorer : ici Happiness Score
+        if df.empty:
+            self.web.setHtml("<h3>Aucun pays ISO valide</h3>")
+            return
+
+        # Si année = Toutes → moyenne par pays
+        if year == "Toutes":
+            df_map = (
+                df.groupby(["iso3", "Country", "Region"], as_index=False)
+                ["Happiness Score"]
+                .mean()
+            )
+        else:
+            df_map = df
+
+        # Création de la carte
         fig = px.choropleth(
-            df,
+            df_map,
             locations="iso3",
             color="Happiness Score",
             hover_name="Country",
-            hover_data=["Year", "Region", "Economy (GDP per Capita)", "Health (Life Expectancy)", "Freedom"],
+            hover_data=["Region"],
             projection="natural earth",
-            title=f"Carte interactive — pays filtrés: {df['Country'].nunique()}"
+            title=f"Carte interactive — pays filtrés: {df_map['Country'].nunique()}",
+            color_continuous_scale="Plasma"
         )
         fig.update_layout(margin=dict(l=0, r=0, t=50, b=0))
 

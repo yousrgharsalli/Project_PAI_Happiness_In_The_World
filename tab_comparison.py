@@ -16,7 +16,6 @@ class ComparisonTab(QWidget):
         self.data_manager = data_manager
         
         # Liste des colonnes numériques disponibles pour l'analyse
-        # (Sert à remplir les menus déroulants Axe X et Axe Y)
         self.numeric_cols = [
             "Happiness Score", "Economy (GDP per Capita)", "Family", 
             "Health (Life Expectancy)", "Freedom", 
@@ -30,9 +29,9 @@ class ComparisonTab(QWidget):
         # Construction de l'interface
         self.setup_ui()
         
-        # Initialisation de l'état des widgets (cacher/montrer selon le type par défaut)
+        # Initialisation de l'état des widgets 
         self.update_inputs_visibility()
-        # Premier affichage du graphique (souvent vide au début)
+        # Premier affichage du graphique 
         self.refresh()
 
     def setup_ui(self):
@@ -52,14 +51,13 @@ class ComparisonTab(QWidget):
             "2. Diagramme en Barres (Comparaison)", 
             "3. Courbes d'évolution (Temporel)"
         ])
-        # Connexion : Quand on change le type, on lance 'on_type_changed'
+        # Connexion :
         self.combo_type.currentIndexChanged.connect(self.on_type_changed)
         left_layout.addWidget(self.combo_type)
         
-        left_layout.addSpacing(10) # Petit espace vide pour aérer
+        left_layout.addSpacing(10) # espace vide 
 
         # 2. Formulaire (Année / Axes)
-        # QFormLayout aligne proprement "Libellé : Widget"
         self.form_layout = QFormLayout()
         
         # Choix de l'année
@@ -68,13 +66,13 @@ class ComparisonTab(QWidget):
         self.combo_year.currentTextChanged.connect(self.refresh) # Rafraîchir dès changement
         self.form_layout.addRow("Année :", self.combo_year)
 
-        # Choix de l'Axe X (ou de la métrique principale pour les barres)
+        # Choix de l'Axe X 
         self.combo_x = QComboBox()
         self.combo_x.addItems(self.numeric_cols)
         self.combo_x.currentTextChanged.connect(self.refresh)
         self.form_layout.addRow("Axe X / Indicateur :", self.combo_x)
 
-        # Choix de l'Axe Y (utile uniquement pour le Scatter plot)
+        # Choix de l'Axe Y (utile pour le Scatter plot)
         self.combo_y = QComboBox()
         self.combo_y.addItems(self.numeric_cols)
         # Par défaut, on sélectionne le 2ème item pour ne pas avoir X=Happiness et Y=Happiness
@@ -90,10 +88,10 @@ class ComparisonTab(QWidget):
         # --- BOUTONS DE SÉLECTION RAPIDE ---
         buttons_layout = QHBoxLayout()
         
-        self.btn_select_all = QPushButton("✅ Tout sélectionner")
+        self.btn_select_all = QPushButton("Tout sélectionner")
         self.btn_select_all.clicked.connect(self.select_all_global)
         
-        self.btn_reset = QPushButton("🗑️ Tout désélectionner")
+        self.btn_reset = QPushButton("Tout désélectionner")
         self.btn_reset.clicked.connect(self.reset_selection)
         
         buttons_layout.addWidget(self.btn_select_all)
@@ -105,12 +103,12 @@ class ComparisonTab(QWidget):
         # --- LISTE 1 : RÉGIONS (Filtre parent) ---
         left_layout.addWidget(QLabel("<b>1. Filtrer par Régions (Ctrl+Clic) :</b>"))
         self.list_regions = QListWidget()
-        # ExtendedSelection permet de sélectionner plusieurs lignes avec Ctrl ou Shift
+        # Sélectionner plusieurs lignes avec Ctrl 
         self.list_regions.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.list_regions.setFixedHeight(100)
         self.list_regions.addItems(self.data_manager.get_all_regions())
         
-        # Quand on clique sur une région, on met à jour la liste des pays (cascade)
+        # Quand on clique sur une région, on met à jour la liste des pays 
         self.list_regions.itemSelectionChanged.connect(self.apply_region_filter)
         left_layout.addWidget(self.list_regions)
 

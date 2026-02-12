@@ -1,65 +1,59 @@
-import pandas as pd  # Importation de la bibliothèque Pandas pour la manipulation de données (Tableaux)
+import pandas as pd  # Importation de la bibliothèque Pandas pour la manipulation de données
 import os  # Importation du module OS pour gérer les chemins de fichiers sur le système d'exploitation
 
 class DataManager:
-    def __init__(self, filename="happiness.csv"):
+    def __init__(self, filename="happiness_fixed.csv"):
         # --- GESTION DU CHEMIN DU FICHIER ---
-        # Récupère le dossier où se trouve le script actuel (.py) pour éviter les erreurs de chemin relatif
+        # Récupèration du dossier où se trouve le script actuel 
         current_folder = os.path.dirname(os.path.abspath(__file__))
-        # Construit le chemin complet (ex: C:/Projet/happiness.csv) compatible Windows/Mac/Linux
+        # Construction du chemin complet 
         file_path = os.path.join(current_folder, filename)
         
-        # Initialisation d'un DataFrame vide par sécurité au démarrage
+        # Initialisation d'un DataFrame 
         self.df = pd.DataFrame()
 
-        # Vérification de l'existence du fichier avant d'essayer de le lire
+        # Vérification de l'existence du fichier 
         if not os.path.exists(file_path):
-            print(f"❌ ERREUR : Le fichier est introuvable ici : {file_path}")
+            print(f"ERREUR : Le fichier est introuvable ici : {file_path}")
             return
 
         try:
-            # --- TENTATIVE DE CHARGEMENT (PLAN A) ---
-            # On essaie d'abord avec le séparateur point-virgule (standard CSV Excel français)
+            # --- CHARGEMENT DU FICHIER ---
             self.df = pd.read_csv(file_path, sep=';', decimal='.')
             
             # Nettoyage des noms de colonnes :
-            # 1. .str.strip() : Enlève les espaces avant/après les noms (ex: " Region " devient "Region")
-            # 2. .replace('\ufeff', '') : Enlève le BOM (Byte Order Mark), un caractère invisible parfois ajouté par Excel
             self.df.columns = self.df.columns.str.strip().str.replace('\ufeff', '')
 
-            # Vérification si la colonne 'Year' a bien été détectée (signe que le séparateur ';' était le bon)
-            if 'Year' in self.df.columns:
-                # Conversion de l'année en texte (str) pour faciliter l'affichage dans les menus déroulants
-                self.df['Year'] = self.df['Year'].astype(str)
-            else:
-                # --- TENTATIVE DE CHARGEMENT (PLAN B) ---
-                # Si la colonne 'Year' n'est pas trouvée, le séparateur était probablement mauvais.
-                # On réessaie avec la virgule (standard CSV international)
-                self.df = pd.read_csv(file_path, sep=',', decimal='.')
-                
-                # On refait le même nettoyage des noms de colonnes
-                self.df.columns = self.df.columns.str.strip().str.replace('\ufeff', '')
-                
-                if 'Year' in self.df.columns:
-                    self.df['Year'] = self.df['Year'].astype(str)
+            # Conversion de la colonne année en texte 
+            self.df['Year'] = self.df['Year'].astype(str)
 
         except Exception as e:
-            # Capture toute erreur technique (ex: fichier corrompu, problème de permissions)
-            print(f"❌ ERREUR TECHNIQUE : {e}")
+            print(f"ERREUR : {e}")
 
     def get_all_years(self):
-        # Renvoie une liste vide si le fichier n'a pas été chargé
+        '''
+        Renvoie la liste des années uniques, triées par ordre croissant et renvoie une liste vide si la colonne n'a pas été chargée.
+        
+        '''
         if self.df.empty: return []
-        # Renvoie la liste des années uniques, triées par ordre croissant
+       
         return sorted(self.df['Year'].unique())
 
     def get_all_regions(self):
-        # Vérifie si la colonne 'Region' existe pour éviter un crash
+        '''
+        Renvoie les valeurs unique des régions et enlève la valeurs NaN et renvoie une liste vide si la colonne n'a pas été chargée.
+        
+        '''
         if self.df.empty or 'Region' not in self.df.columns: return []
-        # .dropna() enlève les valeurs vides (NaN) avant de chercher les valeurs uniques
+        
         return sorted(self.df['Region'].dropna().unique())
 
     def get_all_countries(self):
+        '''
+        Renvoie les valeurs unique des pays et enlève la valeurs NaN et renvoie une liste vide si la colonne n'a pas été chargée.
+        
+        '''
+
         if self.df.empty: return []
         return sorted(self.df['Country'].unique())
     
@@ -72,16 +66,42 @@ class DataManager:
                              free_min, free_max,
                              trust_min, trust_max,
                              gen_min, gen_max):
+        '''
+    Applique un filtrage avancé sur les données en combinant des filtres textuels (année, région, pays) et des filtres
+    numériques (bornes minimales et maximales sur plusieurs indicateurs).
+
+    :param year: Année sélectionnée pour le filtrage 
+    :param region: Région sélectionnée ou "Toutes"
+    :param country: Pays sélectionné ou "Toutes"
+
+    :param happ_min: Valeur minimale du score de bonheur
+    :param happ_max: Valeur maximale du score de bonheur
+
+    :param gdp_min: Valeur minimale du PIB par habitant
+    :param gdp_max: Valeur maximale du PIB par habitant
+
+    :param fam_min: Valeur minimale de l'indicateur Family
+    :param fam_max: Valeur maximale de l'indicateur Family
+
+    :param health_min: Valeur minimale de l'espérance de vie 
+    :param health_max: Valeur maximale de l'espérance de vie 
+ 
+    :param free_min: Valeur minimale de l'indicateur Freedom
+    :param free_max: Valeur maximale de l'indicateur Freedom
+
+    :param trust_min: Valeur minimale de l'indicateur Trust 
+    :param trust_max: Valeur maximale de l'indicateur Trust 
+
+    :param gen_min: Valeur minimale de l'indicateur Generosity
+    :param gen_max: Valeur maximale de l'indicateur Generosity
+        '''
         
-        # Sécurité : si aucune donnée n'est chargée, on renvoie un tableau vide tout de suite
         if self.df.empty: return pd.DataFrame()
         
-        # IMPORTANT : On travaille sur une COPIE (.copy()) du DataFrame original.
-        # Cela évite de supprimer définitivement les données de la mémoire de l'application.
+        # Création d'une cope du DataFrame original.
         df = self.df.copy()
 
         # 1. Filtres Textuels (Listes déroulantes)
-        # On n'applique le filtre que si l'utilisateur n'a pas choisi "Toutes"
         if year != "Toutes":
             df = df[df['Year'] == year]
         if region != "Toutes":
@@ -89,11 +109,8 @@ class DataManager:
         if country != "Toutes":
             df = df[df['Country'] == country]
 
-        # 2. Filtres Numériques (Bornes Min et Max - Sliders)
-        # On utilise le nom exact des colonnes tel qu'écrit dans le fichier CSV
+        # 2. Filtres Numériques (Bornes Min et Max)
         try:
-            # On applique tous les filtres en même temps avec l'opérateur '&' (ET logique).
-            # Une ligne n'est gardée que si elle respecte TOUTES ces conditions.
             df = df[
                 (df['Happiness Score'] >= happ_min) & (df['Happiness Score'] <= happ_max) &
                 (df['Economy (GDP per Capita)'] >= gdp_min) & (df['Economy (GDP per Capita)'] <= gdp_max) &
@@ -104,8 +121,6 @@ class DataManager:
                 (df['Generosity'] >= gen_min) & (df['Generosity'] <= gen_max)
             ]
         except KeyError as e:
-            # Cette erreur arrive si une colonne (ex: 'Happiness Score') n'existe pas dans le CSV chargé
-            print(f"⚠️ Erreur de colonne manquante lors du filtrage : {e}")
+            print(f"Erreur de colonne manquante lors du filtrage : {e}")
         
-        # On retourne le résultat filtré pour affichage
         return df

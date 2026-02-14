@@ -78,14 +78,7 @@ Voici une brève description des fichiers source :
     * `graph_compare.py` : Gère les graphiques de l'onglet Comparaison (Scatter, Line).
 
 ## ⚙️ Installation et Lancement
-### 1. Prérequis
+###  Prérequis
 - Python 3.10 ou supérieur
 - Environnement virtuel recommandé
 
-### 2. Installation des dépendances
-```bash 
-pip install -r requirements.txt
-```
-### 3. Installation des dépendances
-```bash
-python main.py
